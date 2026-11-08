@@ -1,0 +1,60 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nexa-cli"
+version = "0.2.0"
+description = "nexa — a slick terminal AI agent for any OpenAI-compatible provider"
+readme = "README.md"
+requires-python = ">=3.9"
+license = "MIT"
+authors = [{ name = "nexa contributors" }]
+keywords = ["ai", "agent", "cli", "terminal", "tui", "openai", "openrouter", "llm"]
+classifiers = [
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Terminals",
+    "Topic :: Utilities",
+]
+dependencies = [
+    "rich>=13.4",
+    "httpx>=0.27",
+]
+
+[project.urls]
+Homepage = "https://github.com/nexa-cli/nexa"
+
+[project.scripts]
+nexa = "nexa.cli:main"
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.4"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+# Keep the classic typing idiom (List/Optional) for 3.9 — don't force UP006/UP035/UP045.
+select = ["E4", "E7", "E9", "F", "W", "I", "B", "ISC", "RUF", "EXE"]
+# B008: function-call defaults are how our argparse-free APIs work.
+# RUF001: ❯ / › / ⚙ are intentional TUI glyphs, not typos.
+# RUF005: [system] + messages is clearer than unpacking.
+ignore = ["B008", "RUF001", "RUF005"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.setuptools]
+packages = ["nexa", "nexa.ui"]
