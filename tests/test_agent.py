@@ -38,7 +38,8 @@ def test_plain_answer_roundtrip():
     assert agent.usage["prompt"] == 7 and agent.usage["completion"] == 2
 
 
-def test_multi_round_tool_loop():
+def test_multi_round_tool_loop(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)  # keep write_file tests out of the repo
     tool_round = sse(
         {"choices": [{"index": 0, "delta": {"tool_calls": [{
             "index": 0, "id": "c9", "type": "function",
