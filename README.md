@@ -1,6 +1,6 @@
-# ⚡ novair
+#  Novair: A Ai Agent 
 
-**A slick terminal AI agent for any OpenAI-compatible provider.** Full TUI panels, streaming answers with markdown, real tool calling (shell / files / web), saved sessions — configured entirely with environment variables.
+**A terminal AI agent for any OpenAI-compatible provider.** Full TUI panels, streaming answers with markdown, real tool calling (shell / files / web), saved sessions — configured entirely with environment variables.
 
 <p align="center"><img src="docs/preview.svg" alt="novair TUI preview" width="100%"></p>
 
@@ -173,7 +173,7 @@ MIT — see [LICENSE](LICENSE).
 
 # 🇮🇩 Dokumentasi Bahasa Indonesia
 
-## ⚡ novair — AI agent terminal keren, siap untuk Arch Linux
+## ⚡ Novair — AI agent terminal, siap untuk Arch Linux
 
 **Tampilan penuh panel ala btop, jawaban streaming ber-markdown, tool calling sungguhan (shell & file & web), riwayat sesi tersimpan — semuanya dikonfigurasi lewat environment variable, tanpa file config.**
 
