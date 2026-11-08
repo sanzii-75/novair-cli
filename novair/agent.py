@@ -8,7 +8,7 @@ from typing import Any, Dict, Iterator, List, Optional
 from .client import ChatClient
 from .tools import TOOL_SCHEMAS, ToolBox
 
-SYSTEM_TEMPLATE = """You are nexa, a sharp, pragmatic AI agent living in the user's terminal.
+SYSTEM_TEMPLATE = """You are novair, a sharp, pragmatic AI agent living in the user's terminal.
 Environment: {os_name} {arch} · shell {shell} · cwd {cwd} · {date}
 
 You can call tools: run_shell, read_file, write_file, list_dir.

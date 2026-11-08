@@ -257,7 +257,7 @@ class ToolBox:
             with httpx.Client(
                 timeout=20.0,
                 follow_redirects=True,
-                headers={"User-Agent": f"nexa/{__version__} (+terminal-agent)"},
+                headers={"User-Agent": f"novair/{__version__} (+terminal-agent)"},
                 transport=self.transport,
             ) as client:
                 with client.stream("GET", url) as resp:

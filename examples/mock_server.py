@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""A tiny OpenAI-compatible mock server so you can try nexa with zero API keys.
+"""A tiny OpenAI-compatible mock server so you can try novair with zero API keys.
 
     python examples/mock_server.py          # listens on http://localhost:8931/v1
     python examples/mock_server.py --port 9000
 
 Then:
-    nexa --base-url http://localhost:8931/v1 --model mock-small chat
+    novair --base-url http://localhost:8931/v1 --model mock-small chat
 
 The mock:
   * streams a normal answer for plain messages (true SSE),
@@ -63,8 +63,8 @@ class Handler(BaseHTTPRequestHandler):
             self._send_json({
                 "object": "list",
                 "data": [
-                    {"id": "mock-small", "object": "model", "owned_by": "nexa-mock"},
-                    {"id": "mock-large", "object": "model", "owned_by": "nexa-mock"},
+                    {"id": "mock-small", "object": "model", "owned_by": "novair-mock"},
+                    {"id": "mock-large", "object": "model", "owned_by": "novair-mock"},
                 ],
             })
         else:
@@ -112,7 +112,7 @@ class Handler(BaseHTTPRequestHandler):
             answer = (
                 f"Mock agent here — the tool returned {len(str(tool_msg.get('content','')).splitlines())} lines:\n"
                 "```\n" + "\n".join(first) + "\n```\n"
-                "That's everything nexa needed. ✔"
+                "That's everything novair needed. ✔"
             )
             pieces = [answer[i:i + 24] for i in range(0, len(answer), 24)]
             if wants_stream:
@@ -156,9 +156,9 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         answer = (
-            f"Hello from the nexa mock server! 🎈\n"
+            f"Hello from the novair mock server! 🎈\n"
             f"You said: {last_user!r}\n\n"
-            "Try asking me to *list the files* — I'll exercise nexa's tool-calling loop.\n"
+            "Try asking me to *list the files* — I'll exercise novair's tool-calling loop.\n"
         )
         pieces = [answer[i:i + 24] for i in range(0, len(answer), 24)]
         if wants_stream:

@@ -1,4 +1,4 @@
-"""nexa command-line interface."""
+"""novair command-line interface."""
 from __future__ import annotations
 
 import argparse
@@ -22,34 +22,34 @@ from .ui import gradient_text
 
 EXAMPLES = """\
 examples:
-  export NEXA_OPENROUTER_API_KEY=sk-or-v1-...      # one key, hundreds of models
-  nexa chat                                        # interactive TUI
-  nexa run "summarize this repo"                   # one-shot prompt
-  nexa run --yolo "run the test suite"             # tools without confirmation
-  nexa --provider openrouter --model anthropic/claude-3.5-sonnet chat
-  nexa --base-url http://localhost:11434/v1 --model llama3.1 chat
-  nexa providers                                   # profiles detected from env
-  nexa models                                      # models the provider offers
-  nexa sessions --rm 20261108-120001               # delete a saved session
+  export NOVAIR_OPENROUTER_API_KEY=sk-or-v1-...      # one key, hundreds of models
+  novair chat                                        # interactive TUI
+  novair run "summarize this repo"                   # one-shot prompt
+  novair run --yolo "run the test suite"             # tools without confirmation
+  novair --provider openrouter --model anthropic/claude-3.5-sonnet chat
+  novair --base-url http://localhost:11434/v1 --model llama3.1 chat
+  novair providers                                   # profiles detected from env
+  novair models                                      # models the provider offers
+  novair sessions --rm 20261108-120001               # delete a saved session
 """
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="nexa",
+        prog="novair",
         description=(
-            "⚡ nexa — a slick terminal AI agent for any OpenAI-compatible provider "
+            "⚡ novair — a slick terminal AI agent for any OpenAI-compatible provider "
             "(OpenRouter, OpenAI, Groq, Ollama, vLLM, llama.cpp …). "
             "Configuration lives entirely in environment variables."
         ),
         epilog=EXAMPLES,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument("--version", action="version", version=f"nexa {__version__}")
+    parser.add_argument("--version", action="version", version=f"novair {__version__}")
 
     common = argparse.ArgumentParser(add_help=False)
     common.add_argument("--provider", metavar="NAME",
-                        help="provider profile: openrouter, openai, or a NEXA_PROFILE_<NAME>_* name")
+                        help="provider profile: openrouter, openai, or a NOVAIR_PROFILE_<NAME>_* name")
     common.add_argument("--model", metavar="ID", help="model id, e.g. openrouter/auto")
     common.add_argument("--base-url", metavar="URL",
                         help="OpenAI-compatible base URL (usually ends in /v1)")
@@ -60,7 +60,7 @@ def build_parser() -> argparse.ArgumentParser:
     common.add_argument("--yolo", action="store_true",
                         help="run tools without confirmation prompts")
     common.add_argument("-s", "--session", metavar="ID",
-                        help="session id (created/resumed under ~/.local/share/nexa/sessions)")
+                        help="session id (created/resumed under ~/.local/share/novair/sessions)")
 
     sub = parser.add_subparsers(dest="command")
 
@@ -111,7 +111,7 @@ def _print_hint(provider: Provider, console: Console) -> None:
             Text.assemble(
                 (msg, "yellow"),
                 ("\n".join(env_hint(provider.name)) + "\n", "bold"),
-                ("\nnexa providers   # see every profile detected in your env", "dim"),
+                ("\nnovair providers   # see every profile detected in your env", "dim"),
             ),
             title="⚠ setup", border_style="yellow", box=box.ROUNDED,
         )
@@ -203,7 +203,7 @@ def cmd_run(args: argparse.Namespace) -> int:
 
 def cmd_providers(args: argparse.Namespace) -> int:
     console = Console()
-    table = Table(title=gradient_text("nexa · provider profiles"),
+    table = Table(title=gradient_text("novair · provider profiles"),
                   box=box.ROUNDED, header_style="bold", expand=True)
     table.add_column("profile", style="bold cyan", no_wrap=True)
     table.add_column("kind", style="dim")
@@ -221,7 +221,7 @@ def cmd_providers(args: argparse.Namespace) -> int:
             "[green]✓ set" if p["has_key"] else "[red]✗ missing",
         )
     console.print(table)
-    console.print(Text("select: nexa --provider <name> chat · or export NEXA_PROVIDER=<name>", style="dim"))
+    console.print(Text("select: novair --provider <name> chat · or export NOVAIR_PROVIDER=<name>", style="dim"))
     return 0
 
 
@@ -240,7 +240,7 @@ def cmd_models(args: argparse.Namespace) -> int:
     for m in models:
         table.add_row(str(m.get("id", "?")), str(m.get("owned_by", "")))
     console.print(table)
-    console.print(Text(f"{len(models)} models · use one: nexa --model <id> chat", style="dim"))
+    console.print(Text(f"{len(models)} models · use one: novair --model <id> chat", style="dim"))
     return 0
 
 
@@ -252,9 +252,9 @@ def cmd_sessions(args: argparse.Namespace) -> int:
         return 0 if ok else 1
     sess = list_sessions()
     if not sess:
-        console.print(Text("no saved sessions yet — chat with -s <id> or just nexa chat", style="dim"))
+        console.print(Text("no saved sessions yet — chat with -s <id> or just novair chat", style="dim"))
         return 0
-    table = Table(title=gradient_text("nexa · sessions"), box=box.ROUNDED, header_style="bold", expand=True)
+    table = Table(title=gradient_text("novair · sessions"), box=box.ROUNDED, header_style="bold", expand=True)
     table.add_column("id", style="bold cyan")
     table.add_column("updated", style="dim")
     table.add_column("title", overflow="fold")
@@ -264,7 +264,7 @@ def cmd_sessions(args: argparse.Namespace) -> int:
     for s in sess[:30]:
         table.add_row(s["id"], s["updated"], s["title"], str(s["turns"]), s["provider"], s["model"])
     console.print(table)
-    console.print(Text("resume in TUI: /resume <id> · delete: nexa sessions --rm <id>", style="dim"))
+    console.print(Text("resume in TUI: /resume <id> · delete: novair sessions --rm <id>", style="dim"))
     return 0
 
 

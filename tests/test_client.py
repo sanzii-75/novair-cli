@@ -1,17 +1,17 @@
-"""Tests for nexa.client — SSE parsing, non-stream fallback, error mapping, retries."""
+"""Tests for novair.client — SSE parsing, non-stream fallback, error mapping, retries."""
 import json
 
 import httpx
 import pytest
 
-from nexa.agent import Agent
-from nexa.client import ChatClient, ProviderError
-from nexa.config import Provider
+from novair.agent import Agent
+from novair.client import ChatClient, ProviderError
+from novair.config import Provider
 
 
 def make_provider(base="http://mock.test/v1"):
     return Provider(name="test", base_url=base, api_key="k", model="m",
-                    key_env_hint="NEXA_TEST_API_KEY")
+                    key_env_hint="NOVAIR_TEST_API_KEY")
 
 
 def sse_body(*chunks):
@@ -92,11 +92,11 @@ def test_401_error_is_actionable():
     with pytest.raises(ProviderError) as exc:
         list(client.chat_stream([{"role": "user", "content": "hi"}]))
     assert "authentication failed" in str(exc.value)
-    assert "NEXA_TEST_API_KEY" in str(exc.value)  # mentions the env var hint
+    assert "NOVAIR_TEST_API_KEY" in str(exc.value)  # mentions the env var hint
 
 
 def test_retries_on_503_then_succeeds(monkeypatch):
-    monkeypatch.setattr("nexa.client.time.sleep", lambda s: None)
+    monkeypatch.setattr("novair.client.time.sleep", lambda s: None)
     ok = sse_body({"choices": [{"index": 0, "delta": {"content": "ok"}, "finish_reason": "stop"}]})
     calls = {"n": 0}
 
@@ -132,7 +132,7 @@ def test_openrouter_attribution_headers():
     client = ChatClient(p)
     h = client._headers()
     assert h["HTTP-Referer"].startswith("https://")
-    assert h["X-Title"] == "nexa-cli"
+    assert h["X-Title"] == "novair-cli"
     assert h["Authorization"] == "Bearer k"
 
 

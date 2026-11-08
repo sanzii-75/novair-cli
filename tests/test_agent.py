@@ -1,11 +1,11 @@
-"""Tests for nexa.agent — loop structure, healing, usage accounting."""
+"""Tests for novair.agent — loop structure, healing, usage accounting."""
 import json
 
 import httpx
 
-from nexa.agent import Agent
-from nexa.client import ChatClient
-from nexa.config import Provider
+from novair.agent import Agent
+from novair.client import ChatClient
+from novair.config import Provider
 
 
 def make_agent(responses, yolo=True):

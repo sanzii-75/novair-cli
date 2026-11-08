@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Suggest an idea for nexa
+about: Suggest an idea for novair
 title: "[feat] "
 labels: enhancement
 assignees: ""
@@ -10,7 +10,7 @@ assignees: ""
 A clear description of the problem, e.g. "I'm always frustrated when [...]".
 
 **Describe the solution you'd like**
-What should happen? Keep in mind nexa's principles: env-only configuration,
+What should happen? Keep in mind novair's principles: env-only configuration,
 OpenAI-compatible everywhere, tools ask before mutating.
 
 **Describe alternatives you've considered**

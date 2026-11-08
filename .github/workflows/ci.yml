@@ -26,7 +26,7 @@ jobs:
           pip install -e ".[dev]"
 
       - name: Lint (ruff)
-        run: ruff check nexa tests
+        run: ruff check novair tests
 
       - name: Test (pytest)
         run: pytest
@@ -44,10 +44,10 @@ jobs:
         run: |
           python examples/mock_server.py --port 8931 &
           sleep 1
-          export NEXA_BASE_URL=http://127.0.0.1:8931/v1 NEXA_API_KEY=mock NEXA_MODEL=mock-small
-          nexa run "hello" | tee out.txt
-          grep -q "Hello from the nexa mock server" out.txt
-          nexa run --yolo "please list the files" | tee out2.txt
+          export NOVAIR_BASE_URL=http://127.0.0.1:8931/v1 NOVAIR_API_KEY=mock NOVAIR_MODEL=mock-small
+          novair run "hello" | tee out.txt
+          grep -q "Hello from the novair mock server" out.txt
+          novair run --yolo "please list the files" | tee out2.txt
           grep -q "exit_code=0" out2.txt
-          nexa providers
-          nexa models
+          novair providers
+          novair models

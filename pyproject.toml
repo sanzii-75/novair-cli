@@ -3,13 +3,13 @@ requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "nexa-cli"
-version = "0.2.0"
-description = "nexa — a slick terminal AI agent for any OpenAI-compatible provider"
+name = "novair-cli"
+version = "0.3.0"
+description = "novair — a slick terminal AI agent for any OpenAI-compatible provider"
 readme = "README.md"
 requires-python = ">=3.9"
 license = "MIT"
-authors = [{ name = "nexa contributors" }]
+authors = [{ name = "novair contributors" }]
 keywords = ["ai", "agent", "cli", "terminal", "tui", "openai", "openrouter", "llm"]
 classifiers = [
     "Environment :: Console",
@@ -28,10 +28,10 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/nexa-cli/nexa"
+Homepage = "https://github.com/sanzii-75/novair-cli"
 
 [project.scripts]
-nexa = "nexa.cli:main"
+novair = "novair.cli:main"
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "ruff>=0.4"]
@@ -57,4 +57,4 @@ ignore = ["B008", "RUF001", "RUF005"]
 quote-style = "double"
 
 [tool.setuptools]
-packages = ["nexa", "nexa.ui"]
+packages = ["novair", "novair.ui"]

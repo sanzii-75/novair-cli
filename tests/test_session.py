@@ -1,5 +1,5 @@
-"""Tests for nexa.session — save/load/list/delete under a temp data dir."""
-from nexa import session
+"""Tests for novair.session — save/load/list/delete under a temp data dir."""
+from novair import session
 
 
 def test_save_load_roundtrip(monkeypatch, tmp_path):

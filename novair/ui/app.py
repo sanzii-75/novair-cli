@@ -1,4 +1,4 @@
-"""nexa TUI — btop-style panels: gradient banner header, live chat body, status bar."""
+"""novair TUI — btop-style panels: gradient banner header, live chat body, status bar."""
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
@@ -33,13 +33,16 @@ BAR_FG = "#A6ADC8"
 
 _BANNER_LETTERS = {
     "N": ["███╗   ██╗", "████╗  ██║", "██╔██╗ ██║", "██║╚██╗██║", "██║ ╚████║", "██║  ╚███║"],
-    "E": ["███████╗", "██╔════╝", "█████╗  ", "██╔══╝  ", "███████╗", "╚══════╝"],
-    "X": ["██╗  ██╗", "╚██╗██╔╝", " ╚███╔╝ ", " ██╔██╗ ", "██╔╝╚██╗", "╚═╝  ╚═╝"],
+    "O": [" ██████╗ ", "██╔═══██╗", "██║   ██║", "██║   ██║", "╚██████╔╝", " ╚═════╝ "],
+    "V": ["██╗   ██╗", "██║   ██║", "██║   ██║", "╚██╗ ██╔╝", " ╚████╔╝ ", "  ╚═══╝  "],
+    "I": ["██╗", "██║", "██║", "██║", "██║", "╚═╝"],
+    "R": ["██████╗ ", "██╔══██╗", "██████╔╝", "██╔══██╗", "██║  ██║", "╚═╝  ╚═╝"],
     "A": [" █████╗ ", "██╔══██╗", "███████║", "██╔══██║", "██║  ██║", "╚═╝  ╚═╝"],
 }
 BANNER_ROWS = [
-    "".join(parts) for parts in zip(_BANNER_LETTERS["N"], _BANNER_LETTERS["E"],
-                                    _BANNER_LETTERS["X"], _BANNER_LETTERS["A"])
+    "".join(parts) for parts in zip(_BANNER_LETTERS["N"], _BANNER_LETTERS["O"],
+                                    _BANNER_LETTERS["V"], _BANNER_LETTERS["A"],
+                                    _BANNER_LETTERS["I"], _BANNER_LETTERS["R"])
 ]
 
 
@@ -159,7 +162,7 @@ def help_table() -> Table:
         ("/export [file.md]", "save the conversation as markdown"),
         ("/yolo", "toggle tool confirmation prompts"),
         ("/clear", "reset the conversation view"),
-        ("/exit", "quit nexa (Ctrl-D works too)"),
+        ("/exit", "quit novair (Ctrl-D works too)"),
     ]
     t = Table(box=box.SIMPLE_HEAD, show_header=True, header_style=f"bold {C_ACCENT}", expand=False)
     t.add_column("command", style="bold", no_wrap=True)
@@ -173,10 +176,10 @@ def setup_warning(provider: Provider) -> Panel:
     exports = "\n".join(env_hint(provider.name))
     body = Text.assemble(
         (f"No API key detected for provider '{provider.name}'.\n\n", "bold yellow"),
-        ("Set one of these (then restart nexa):\n", C_SYS),
+        ("Set one of these (then restart novair):\n", C_SYS),
         (exports + "\n", f"bold {C_ACCENT}"),
-        ("\nOr point nexa at any OpenAI-compatible endpoint:\n", C_SYS),
-        ("nexa --base-url http://localhost:11434/v1 --model llama3.1 chat", "bold"),
+        ("\nOr point novair at any OpenAI-compatible endpoint:\n", C_SYS),
+        ("novair --base-url http://localhost:11434/v1 --model llama3.1 chat", "bold"),
         ("\nZero-key demo:  python examples/mock_server.py  then use --base-url http://localhost:8931/v1", C_DIM),
     )
     return Panel(body, title="[yellow]⚠ setup", border_style="yellow", box=box.ROUNDED, padding=(0, 1))
@@ -185,7 +188,7 @@ def setup_warning(provider: Provider) -> Panel:
 # ── header / status bar ──────────────────────────────────────────────────────
 def header_panel(provider: Provider, session_id: str, agent: Agent, compact: bool) -> Panel:
     if compact:
-        logo = gradient_text("⚡ NEXA")
+        logo = gradient_text("⚡ NOVAIR")
         info_col = Text.assemble(
             ("provider ", C_DIM), (provider.name, f"bold {C_ACCENT}"),
             ("  model ", C_DIM), (provider.model, "bold"),
@@ -245,7 +248,7 @@ class StatusBar:
             "tool": ("yellow", "⚙"),
         }[self.state]
         bar = Text(style=f"{BAR_FG} on {BAR_BG}")
-        bar.append(" ⚡ nexa ", style=f"bold {GRADIENT[0]} on {BAR_BG}")
+        bar.append(" ⚡ novair ", style=f"bold {GRADIENT[0]} on {BAR_BG}")
         bar.append("│ ", style=f"on {BAR_BG}")
         bar.append(f"{self.provider}", style=f"bold {C_ACCENT} on {BAR_BG}")
         bar.append(" · ", style=f"on {BAR_BG}")
@@ -413,8 +416,8 @@ class ChatApp:
             self.view.add(sys_note(f"unknown command /{cmd} — try /help"))
 
     def _export(self, arg: str) -> None:
-        path = arg.strip() or f"nexa-{self.session_id}.md"
-        lines = [f"# nexa session · {self.session_id}",
+        path = arg.strip() or f"novair-{self.session_id}.md"
+        lines = [f"# novair session · {self.session_id}",
                  f"provider: {self.provider.name} · model: {self.provider.model}", ""]
         for m in self.agent.messages:
             role = m.get("role")
@@ -423,7 +426,7 @@ class ChatApp:
             elif role == "assistant":
                 content = m.get("content")
                 if content:
-                    lines += ["## ⚡ nexa", "", str(content), ""]
+                    lines += ["## ⚡ novair", "", str(content), ""]
                 for tc in m.get("tool_calls") or []:
                     fn = tc.get("function", {})
                     lines.append(f"> ⚙ **{fn.get('name')}** `{fn.get('arguments', '')}`")
@@ -618,7 +621,7 @@ class ChatApp:
     def _run_headless(self) -> None:
         """Plain REPL when stdout is not a terminal (pipes, CI, tests)."""
         self.console.print(
-            gradient_text("NEXA"), "· headless mode (no TTY detected)", style=C_DIM
+            gradient_text("NOVAIR"), "· headless mode (no TTY detected)", style=C_DIM
         )
         while not self._quit:
             try:

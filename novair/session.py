@@ -1,4 +1,4 @@
-"""Chat session persistence — JSON files under $XDG_DATA_HOME/nexa/sessions."""
+"""Chat session persistence — JSON files under $XDG_DATA_HOME/novair/sessions."""
 from __future__ import annotations
 
 import json
@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional
 
 def data_dir() -> Path:
     base = os.environ.get("XDG_DATA_HOME") or os.path.expanduser("~/.local/share")
-    return Path(base) / "nexa"
+    return Path(base) / "novair"
 
 
 def sessions_dir() -> Path:

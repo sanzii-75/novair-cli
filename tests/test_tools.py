@@ -1,9 +1,9 @@
-"""Tests for nexa.tools — shell, files, dirs, fetch_url, confirmation gating."""
+"""Tests for novair.tools — shell, files, dirs, fetch_url, confirmation gating."""
 import json
 
 import httpx
 
-from nexa.tools import ToolBox
+from novair.tools import ToolBox
 
 
 def test_run_shell_echo(tmp_path):
@@ -100,7 +100,7 @@ def test_fetch_url_error_status():
 
 
 def test_schemas_are_wellformed():
-    from nexa.tools import TOOL_SCHEMAS
+    from novair.tools import TOOL_SCHEMAS
     names = {s["function"]["name"] for s in TOOL_SCHEMAS}
     assert names == {"run_shell", "read_file", "write_file", "list_dir", "fetch_url"}
     for s in TOOL_SCHEMAS:

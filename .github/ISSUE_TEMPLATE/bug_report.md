@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Something in nexa is broken
+about: Something in novair is broken
 title: "[bug] "
 labels: bug
 assignees: ""
@@ -13,13 +13,13 @@ A clear description of what happened vs what you expected.
 Steps / the exact command you ran, e.g.:
 
 ```
-nexa --provider openrouter --model openrouter/auto chat
+novair --provider openrouter --model openrouter/auto chat
 ```
 
 **Environment (please complete):**
 - OS / distro: [e.g. Arch Linux, kernel 6.x]
 - Terminal: [e.g. alacritty 0.13]
-- nexa version (`nexa --version`):
+- novair version (`novair --version`):
 - Python version (`python --version`):
 
 **Provider info**

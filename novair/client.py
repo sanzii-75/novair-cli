@@ -41,7 +41,7 @@ class ChatClient:
     def _headers(self, extra: Optional[Dict[str, str]] = None) -> Dict[str, str]:
         headers = {
             "Content-Type": "application/json",
-            "User-Agent": f"nexa/{__version__}",
+            "User-Agent": f"novair/{__version__}",
             "Accept": "application/json, text/event-stream",
         }
         if self.provider.api_key:
@@ -53,8 +53,8 @@ class ChatClient:
             pass
         if "openrouter" in host:
             # Recommended attribution headers for OpenRouter.
-            headers["HTTP-Referer"] = "https://github.com/nexa-cli/nexa"
-            headers["X-Title"] = "nexa-cli"
+            headers["HTTP-Referer"] = "https://github.com/sanzii-75/novair-cli"
+            headers["X-Title"] = "novair-cli"
         if extra:
             headers.update(extra)
         return headers

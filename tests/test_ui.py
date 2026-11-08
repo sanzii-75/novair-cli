@@ -1,5 +1,5 @@
-"""Tests for nexa.ui — message renderables and export."""
-from nexa.ui.app import (
+"""Tests for novair.ui — message renderables and export."""
+from novair.ui.app import (
     BANNER_ROWS,
     _fmt_tokens,
     gradient_text,
@@ -16,8 +16,8 @@ def test_banner_rows_have_six_lines():
 
 
 def test_gradient_text_styled():
-    t = gradient_text("NEXA")
-    assert t.plain == "NEXA"
+    t = gradient_text("NOVAIR")
+    assert t.plain == "NOVAIR"
     assert any(span.style for span in t.spans)
 
 
@@ -39,10 +39,10 @@ def test_user_and_tool_renderables():
 def test_export_writes_markdown(tmp_path, monkeypatch):
     from rich.console import Console
 
-    from nexa.agent import Agent
-    from nexa.client import ChatClient
-    from nexa.config import Provider
-    from nexa.ui.app import ChatApp
+    from novair.agent import Agent
+    from novair.client import ChatClient
+    from novair.config import Provider
+    from novair.ui.app import ChatApp
 
     p = Provider(name="test", base_url="http://mock.test/v1", api_key="k", model="m")
     agent = Agent(ChatClient(p), yolo=True)
