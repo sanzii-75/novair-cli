@@ -1,6 +1,7 @@
 """novair TUI — btop-style panels: gradient banner header, live chat body, status bar."""
 from __future__ import annotations
 
+import os
 from typing import Any, Dict, List, Optional
 
 from rich import box
@@ -20,6 +21,7 @@ from ..config import Provider, env_hint
 from ..session import list_sessions, new_id
 from ..session import load as load_session
 from ..session import save as save_session
+from .themes import resolve_theme, theme_names
 
 # ── palette ──────────────────────────────────────────────────────────────────
 GRADIENT = ["#5EEAD4", "#38BDF8", "#818CF8", "#C084FC", "#F472B6"]
@@ -44,6 +46,24 @@ BANNER_ROWS = [
                                     _BANNER_LETTERS["V"], _BANNER_LETTERS["A"],
                                     _BANNER_LETTERS["I"], _BANNER_LETTERS["R"])
 ]
+
+
+def apply_theme(theme) -> None:
+    """Rebind the module-level palette constants to a Theme.
+
+    The render helpers (header_panel, StatusBar, user_msg, …) read these
+    globals at call time, so rebinding repaints the whole TUI. A CLI process
+    is short-lived, which makes this pragmatic global switch acceptable.
+    """
+    global GRADIENT, C_ACCENT, C_USER, C_TOOL, C_DIM, C_SYS, BAR_BG, BAR_FG
+    GRADIENT = list(theme.gradient)
+    C_ACCENT = theme.accent
+    C_USER = theme.user
+    C_TOOL = theme.tool
+    C_DIM = theme.dim
+    C_SYS = theme.sys
+    BAR_BG = theme.bar_bg
+    BAR_FG = theme.bar_fg
 
 
 def gradient_text(text: str, palette: Optional[List[str]] = None) -> Text:
@@ -159,6 +179,8 @@ def help_table() -> Table:
         ("/models", "list models offered by the provider"),
         ("/system [text]", "show or set the system prompt"),
         ("/tools", "list the tools the agent can use"),
+        ("/theme [name]", "show or switch the color theme"),
+        ("/memory [clear]", "list or wipe the project memory bank"),
         ("/export [file.md]", "save the conversation as markdown"),
         ("/yolo", "toggle tool confirmation prompts"),
         ("/clear", "reset the conversation view"),
@@ -287,6 +309,7 @@ class ChatApp:
         self.view = ChatView()
         self.status = StatusBar()
         self.yolo = agent.toolbox.yolo
+        self.theme_name = None  # set by run_chat / /theme
         self._quit = False
 
     # ── confirm callback (used by ToolBox) ───────────────────────────────────
@@ -410,10 +433,59 @@ class ChatApp:
         elif cmd == "clear":
             self.agent.messages.clear()
             self.view.clear()
+        elif cmd == "theme":
+            self._switch_theme(arg)
+        elif cmd == "memory":
+            self._show_memory(arg)
         elif cmd == "export":
             self._export(arg)
         else:
             self.view.add(sys_note(f"unknown command /{cmd} — try /help"))
+
+    def _switch_theme(self, arg: str) -> None:
+        if not arg:
+            t = Table(box=box.SIMPLE_HEAD, header_style=f"bold {C_ACCENT}")
+            t.add_column("theme", style="bold")
+            t.add_column("gradient", no_wrap=True)
+            from .themes import THEMES
+            for name, theme in THEMES.items():
+                swatch = Text("  ".join("██" for _ in theme.gradient))
+                for i, hex_ in enumerate(theme.gradient):
+                    swatch.stylize(hex_, i * 3, i * 3 + 2)
+                marker = "→ " if name == (self.theme_name or "novair") else "  "
+                t.add_row(marker + name, swatch)
+            self.view.add(t)
+            self.view.add(sys_note("switch with /theme <name> · persists via export NOVAIR_THEME=<name>"))
+            return
+        theme = resolve_theme(arg)
+        if theme is None:
+            self.view.add(sys_note(f"unknown theme '{arg}' — available: {', '.join(theme_names())}"))
+            return
+        apply_theme(theme)
+        self.theme_name = theme.name
+        self.view.clear()  # cached render lines still carry the old palette
+        self._refresh()
+        self.view.add(sys_note(f"theme → {theme.name}"))
+
+    def _show_memory(self, arg: str) -> None:
+        from .. import memory as memory_mod
+        if arg.strip().lower() == "clear":
+            removed = memory_mod.clear(os.getcwd())
+            self.view.add(sys_note(f"memory cleared ({removed} fact(s) removed)"))
+            return
+        facts = memory_mod.list_facts(os.getcwd())
+        if not facts:
+            self.view.add(sys_note("no saved facts for this project — the agent stores them with the retain tool"))
+            return
+        t = Table(box=box.SIMPLE_HEAD, header_style=f"bold {C_ACCENT}")
+        t.add_column("id", style=C_DIM)
+        t.add_column("created", style=C_DIM)
+        t.add_column("fact", overflow="fold")
+        for f in facts[-25:]:
+            t.add_row(f["id"], f["created"], f["text"])
+        if len(facts) > 25:
+            self.view.add(sys_note(f"showing last 25 of {len(facts)} facts"))
+        self.view.add(t)
 
     def _export(self, arg: str) -> None:
         path = arg.strip() or f"novair-{self.session_id}.md"
@@ -655,7 +727,7 @@ class ChatApp:
                 self.agent.heal()
                 self.console.print(interrupted_msg())
             save_session(
-                self.session_id,
+                      self.session_id,
                 self.agent.messages,
                 {"provider": self.provider.name, "model": self.provider.model,
                  "system": self.agent.system_text},
@@ -669,8 +741,14 @@ def run_chat(
     agent: Agent,
     session_id: Optional[str] = None,
     confirm_hook=None,
+    theme: Optional[str] = None,
 ) -> None:
+    requested = theme or os.environ.get("NOVAIR_THEME")
+    resolved = resolve_theme(requested)
+    if resolved is not None:
+        apply_theme(resolved)
     app = ChatApp(console, client, provider, agent, session_id)
+    app.theme_name = resolved.name if resolved else "novair"
     if confirm_hook is not None:
         confirm_hook.app = app
     try:

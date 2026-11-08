@@ -65,6 +65,8 @@ class ChatClient:
         messages: List[Dict[str, Any]],
         tools: Optional[List[Dict[str, Any]]] = None,
         temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+        top_p: Optional[float] = None,
     ) -> Iterator[Dict[str, Any]]:
         """Yield normalized events:
             {"type": "chunk", "delta": {...}, "finish_reason": str|None, "usage": {...}|None}
@@ -83,6 +85,10 @@ class ChatClient:
             payload["tools"] = tools
         if temperature is not None:
             payload["temperature"] = temperature
+        if max_tokens is not None:
+            payload["max_tokens"] = max_tokens
+        if top_p is not None:
+            payload["top_p"] = top_p
 
         url = self.provider.base_url + "/chat/completions"
         received = False

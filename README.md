@@ -23,10 +23,13 @@
 |---|---|
 | 🖥 **Full TUI** | btop-style layout: gradient ASCII banner, bordered chat panel, live status bar (provider · model · session · tokens · cost · state) |
 | 🌊 **Streaming** | answers appear token-by-token, then re-render as markdown with syntax-highlighted code |
-| 🔧 **Tool calling** | `run_shell`, `read_file`, `write_file`, `list_dir`, `fetch_url` — mutating actions ask first (`--yolo` to skip) |
-| 🌐 **Web-aware agent** | `fetch_url` lets the agent read docs pages and JSON APIs (read-only GET) |
+| 🔧 **11 built-in tools** | `run_shell`, `read_file`, `write_file`, `edit_file`, `list_dir`, `grep`, `glob`, `fetch_url`, `web_search`, `retain`, `recall` — mutating actions ask first (`--yolo` to skip) |
+| 🌐 **Web-aware agent** | `web_search` (DuckDuckGo, no key) + `fetch_url` let the agent search and read docs pages, raw files and JSON APIs |
+| 🧠 **Project memory** | the agent saves durable facts per-project (`retain`) and looks them up in later sessions (`recall`) — stored under `~/.local/share/novair/memory` |
+| 🎨 **Themes** | `NOVAIR_THEME` or `/theme`: novair, catppuccin, tokyonight, gruvbox, dracula, matrix — repaints banner, panels and status bar |
 | 🗿 **Multi-provider profiles** | preset **OpenRouter**, plus any OpenAI-compatible endpoint (OpenAI, Groq, Ollama, vLLM, llama.cpp, LM Studio…) via env vars — no config files |
 | 💾 **Sessions** | every chat auto-saves to `~/.local/share/novair/sessions`; resume with `novair chat -s <id>` or `/resume`, export with `/export` |
+| ⌨ **Shell completion** | `novair completions bash|zsh|fish` — generated from live profile metadata, never drifts |
 | 🛡 **Resilient** | auto-retry on 429/5xx/connection errors, healed tool rounds after Ctrl-C, clear error messages with the env var to fix |
 | 🧪 **Zero-key demo** | ships an OpenAI-compatible mock server to try everything without an API key |
 
@@ -83,7 +86,9 @@ See [`novair-env.example.sh`](novair-env.example.sh) for a copy-paste template.
 | `NOVAIR_API_KEY` / `NOVAIR_BASE_URL` / `NOVAIR_MODEL` | the default profile |
 | `NOVAIR_OPENROUTER_API_KEY` (or `OPENROUTER_API_KEY`) | OpenRouter preset |
 | `NOVAIR_PROFILE_<NAME>_API_KEY` / `_BASE_URL` / `_MODEL` | any custom profile |
-| `XDG_DATA_HOME` | where sessions live (default `~/.local/share/novair/sessions`) |
+| `NOVAIR_TEMPERATURE` / `NOVAIR_MAX_TOKENS` / `NOVAIR_TOP_P` | default sampling params (CLI flags override) |
+| `NOVAIR_THEME` | TUI theme: novair, catppuccin, tokyonight, gruvbox, dracula, matrix |
+| `XDG_DATA_HOME` | where sessions & memory live (default `~/.local/share/novair`) |
 
 ## Usage
 
@@ -91,12 +96,26 @@ See [`novair-env.example.sh`](novair-env.example.sh) for a copy-paste template.
 novair chat                        # interactive TUI (default command)
 novair run "summarize this repo"   # one-shot prompt, streamed
 novair run --yolo "run the tests"  # tools without confirmation
+novair chat --temperature 0.2 --max-tokens 2048 --top-p 0.9   # sampling knobs
+novair chat --theme gruvbox        # repaint the TUI (or export NOVAIR_THEME)
 novair --provider openrouter --model anthropic/claude-3.5-sonnet chat
 novair --base-url http://localhost:11434/v1 --model llama3.1 chat   # Ollama
 novair providers                   # profiles detected from your env
 novair models                      # models the provider offers
 novair sessions [--rm ID]          # list / delete saved sessions
+novair completions zsh             # shell completion script (bash/zsh/fish)
 ```
+
+### Shell completion
+
+```bash
+eval "$(novair completions zsh)"          # add to ~/.zshrc
+eval "$(novair completions bash)"         # add to ~/.bashrc
+novair completions fish > ~/.config/fish/completions/novair.fish
+```
+
+Scripts are generated live from your detected provider profiles, so
+`--provider <TAB>` always matches what novair can actually use.
 
 ### Inside the TUI
 
@@ -108,6 +127,8 @@ novair sessions [--rm ID]          # list / delete saved sessions
 | `/provider [name]` | switch profile mid-chat |
 | `/model [id]` · `/models` | inspect/switch model |
 | `/system [text]` | show/override the system prompt |
+| `/theme [name]` | list or switch the color theme |
+| `/memory [clear]` | list or wipe saved project facts |
 | `/tools` · `/yolo` | tool list · toggle confirmations |
 | `/export [file.md]` | save the conversation as markdown |
 | `/clear` · `/exit` | reset view · quit |
@@ -116,10 +137,12 @@ novair sessions [--rm ID]          # list / delete saved sessions
 
 ### Tool calling & safety
 
-The agent can run shell commands, read/write files and fetch URLs. **`run_shell` and
-`write_file` ask before acting** (`y / n / a-always`); read-only tools (`read_file`,
-`list_dir`, `fetch_url`) don't. `--yolo` or `/yolo` disables prompts — use it inside
-trusted containers/VMs only. Tool output is truncated before it re-enters the model context.
+The agent can run shell commands, read/write/edit files, search code (`grep`/`glob`),
+fetch URLs and search the web. **Mutating tools (`run_shell`, `write_file`, `edit_file`)
+ask before acting** (`y / n / a-always`); read-only tools (`read_file`, `list_dir`,
+`grep`, `glob`, `fetch_url`, `web_search`, `retain`, `recall`) don't. `--yolo` or
+`/yolo` disables prompts — use it inside trusted containers/VMs only. Tool output is
+truncated before it re-enters the model context.
 
 ### Try it with zero keys
 
@@ -147,10 +170,11 @@ python examples/mock_server.py & \
 
 ## Roadmap
 
-- [ ] `web_search` tool (DuckDuckGo/Searx backends)
+- [x] ~~`web_search` tool~~ — shipped in v0.4.0 (DuckDuckGo, no key)
 - [ ] token-cost estimate table (`/cost`) with per-model pricing
 - [ ] AUR package accepted (`yay -S novair-cli`)
-- [ ] optional persistent config with explicit `--with-config` opt-in (still env-first)
+- [ ] memory upgrades: reflect/forget + cross-project recall (v0.5)
+- [ ] subagent fan-out (`task` tool) with isolated worktrees (v0.5)
 - [ ] streaming tool-args preview in the TUI
 - [ ] multi-turn one-shot mode for scripting (`novair run --continue`)
 
@@ -181,10 +205,13 @@ MIT — see [LICENSE](LICENSE).
 
 - 🖥 **Full TUI panel** — banner ASCII gradasi, panel chat ber-border, status bar hidup (provider · model · sesi · token · biaya · status)
 - 🌊 **Chat streaming** — respons mengalir realtime lalu di-render ulang sebagai markdown + syntax highlighting
-- 🔧 **Tool calling** — `run_shell`, `read_file`, `write_file`, `list_dir`, `fetch_url`, dengan **konfirmasi tiap aksi** (`--yolo` untuk lewati)
-- 🌐 **Paham web** — `fetch_url` bikin agent bisa membaca halaman dokumentasi & API JSON (GET read-only)
+- 🔧 **11 tool bawaan** — `run_shell`, `read_file`, `write_file`, `edit_file`, `list_dir`, `grep`, `glob`, `fetch_url`, `web_search`, `retain`, `recall`, dengan **konfirmasi tiap aksi mutasi** (`--yolo` untuk lewati)
+- 🌐 **Paham web** — `web_search` (DuckDuckGo, tanpa key) + `fetch_url` bikin agent bisa mencari & membaca halaman dokumentasi, file mentah, dan API JSON
+- 🧠 **Memori proyek** — agent menyimpan fakta penting per-proyek (`retain`) dan mengingatnya lagi di sesi berikutnya (`recall`) — tersimpan di `~/.local/share/novair/memory`
+- 🎨 **Tema warna** — `NOVAIR_THEME` atau `/theme`: novair, catppuccin, tokyonight, gruvbox, dracula, matrix — banner, panel, dan status bar ikut berubah
 - 🗿 **Multi-profil provider** — preset **OpenRouter** + endpoint OpenAI-compatible apa pun (OpenAI, Groq, Ollama, vLLM, llama.cpp, LM Studio…)
 - 💾 **Riwayat sesi** — otomatis tersimpan di `~/.local/share/novair/sessions`, lanjutkan dengan `novair chat -s <id>` atau `/resume`, ekspor ke markdown via `/export`
+- ⌨ **Shell completion** — `novair completions bash|zsh|fish`, di-generate dari metadata profil yang terdeteksi
 - 🛡 **Tahan banting** — auto-retry untuk 429/5xx/koneksi, putaran tool yang terputus otomatis "diobati", pesan error jelas
 - 🧪 **Demo tanpa API key** — ada mock server OpenAI-compatible bawaan
 
@@ -231,17 +258,28 @@ Template siap salin: [`novair-env.example.sh`](novair-env.example.sh).
 novair chat                        # TUI interaktif (perintah default)
 novair run "ringkas repo ini"      # sekali jalan, hasil streaming
 novair run --yolo "jalankan test"  # tool tanpa konfirmasi
+novair chat --temperature 0.2 --max-tokens 2048 --top-p 0.9   # parameter sampling
+novair chat --theme gruvbox        # ganti tema TUI (atau export NOVAIR_THEME)
 novair --base-url http://localhost:11434/v1 --model llama3.1 chat   # Ollama lokal
 novair providers                   # daftar profil yang terdeteksi
 novair models                      # daftar model dari provider
 novair sessions [--rm ID]          # kelola sesi tersimpan
+novair completions zsh             # script completion shell (bash/zsh/fish)
 ```
 
-Perintah di dalam TUI: `/help` `/new` `/sessions` `/resume` `/provider` `/model` `/models` `/system` `/tools` `/export` `/yolo` `/clear` `/exit`. `Ctrl-C` memotong jawaban yang sedang berjalan; `Ctrl-D` keluar.
+Shell completion — tambahkan ke rc file shell-mu:
+
+```bash
+eval "$(novair completions zsh)"          # ~/.zshrc
+eval "$(novair completions bash)"         # ~/.bashrc
+novair completions fish > ~/.config/fish/completions/novair.fish
+```
+
+Perintah di dalam TUI: `/help` `/new` `/sessions` `/resume` `/provider` `/model` `/models` `/system` `/theme` `/memory` `/tools` `/export` `/yolo` `/clear` `/exit`. `Ctrl-C` memotong jawaban yang sedang berjalan; `Ctrl-D` keluar.
 
 ### Keamanan tool
 
-`run_shell` dan `write_file` **selalu minta konfirmasi** (`y / n / a`), kecuali `--yolo` atau `/yolo` aktif — gunakan hanya di container/VM terpercaya. Tool read-only (`read_file`, `list_dir`, `fetch_url`) tidak perlu konfirmasi. Output tool dipangkas sebelum masuk konteks model.
+Tool yang **memutasi** (`run_shell`, `write_file`, `edit_file`) **selalu minta konfirmasi** (`y / n / a`), kecuali `--yolo` atau `/yolo` aktif — gunakan hanya di container/VM terpercaya. Tool read-only (`read_file`, `list_dir`, `grep`, `glob`, `fetch_url`, `web_search`, `retain`, `recall`) tidak perlu konfirmasi. Output tool dipangkas sebelum masuk konteks model.
 
 ### Coba tanpa API key
 
@@ -252,7 +290,7 @@ python examples/mock_server.py & \
 
 ### Berkontribusi & roadmap
 
-Roadmap: tool `web_search`, tabel estimasi biaya `/cost`, paket AUR resmi, preview tool-args saat streaming. Gas ke [CONTRIBUTING.md](CONTRIBUTING.md) — ada versi Indonesia-nya juga. CI harus tetap hijau (`ruff check novair tests && pytest`).
+Roadmap: tabel estimasi biaya `/cost`, upgrade memori (reflect/forget), subagent fan-out (`task`), paket AUR resmi, preview tool-args saat streaming. Gas ke [CONTRIBUTING.md](CONTRIBUTING.md) — ada versi Indonesia-nya juga. CI harus tetap hijau (`ruff check novair tests && pytest`).
 
 ### Lisensi
 

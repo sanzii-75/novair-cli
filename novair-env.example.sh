@@ -31,3 +31,12 @@ export NOVAIR_OPENROUTER_API_KEY="sk-or-v1-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 
 # Pick a default provider without typing --provider every time (optional):
 # export NOVAIR_PROVIDER="openrouter"
+
+# ── Sampling defaults (CLI flags override these) ────────────────────────────
+# export NOVAIR_TEMPERATURE="0.7"
+# export NOVAIR_MAX_TOKENS="4096"
+# export NOVAIR_TOP_P="0.9"
+
+# ── TUI theme (also switchable live with /theme) ────────────────────────────
+# novair | catppuccin | tokyonight | gruvbox | dracula | matrix
+# export NOVAIR_THEME="catppuccin"

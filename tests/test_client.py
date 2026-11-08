@@ -157,3 +157,20 @@ def test_cost_accumulates():
     list(agent.ask("hi"))
     assert agent.usage["cost"] == pytest.approx(0.01)
     assert agent.usage["prompt"] == 10
+
+
+def test_chat_stream_payload_includes_sampling_params():
+    seen = {}
+
+    def handler(request):
+        seen["payload"] = json.loads(request.content)
+        return httpx.Response(200, headers={"content-type": "text/event-stream"}, content=sse_body(
+            {"choices": [{"index": 0, "delta": {"content": "x"}, "finish_reason": "stop"}]},
+        ))
+
+    client = ChatClient(make_provider(), transport=httpx.MockTransport(handler))
+    list(client.chat_stream([{"role": "user", "content": "hi"}], temperature=0.5,
+                            max_tokens=128, top_p=0.95))
+    assert seen["payload"]["temperature"] == 0.5
+    assert seen["payload"]["max_tokens"] == 128
+    assert seen["payload"]["top_p"] == 0.95

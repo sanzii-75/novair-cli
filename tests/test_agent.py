@@ -99,3 +99,44 @@ def test_system_text_injected():
     list(agent.ask("hi"))
     assert seen["messages"][0] == {"role": "system", "content": "BE NICE"}
     assert seen["messages"][1]["role"] == "user"
+
+
+def test_default_system_text_lists_all_tools():
+    from novair.tools import TOOL_SCHEMAS
+
+    text = Agent.default_system_text()
+    for s in TOOL_SCHEMAS:
+        assert s["function"]["name"] in text
+
+
+def test_model_params_reach_payload():
+    seen = {}
+
+    def handler(request: httpx.Request):
+        seen["payload"] = json.loads(request.content)
+        body = sse({"choices": [{"index": 0, "delta": {"content": "x"}, "finish_reason": "stop"}]})
+        return httpx.Response(200, headers={"content-type": "text/event-stream"}, content=body)
+
+    p = Provider(name="test", base_url="http://mock.test/v1", api_key="k", model="m")
+    client = ChatClient(p, transport=httpx.MockTransport(handler))
+    agent = Agent(client, yolo=True, temperature=0.4, max_tokens=256, top_p=0.9)
+    list(agent.ask("hi"))
+    assert seen["payload"]["temperature"] == 0.4
+    assert seen["payload"]["max_tokens"] == 256
+    assert seen["payload"]["top_p"] == 0.9
+
+
+def test_model_params_omitted_when_unset():
+    seen = {}
+
+    def handler(request: httpx.Request):
+        seen["payload"] = json.loads(request.content)
+        body = sse({"choices": [{"index": 0, "delta": {"content": "x"}, "finish_reason": "stop"}]})
+        return httpx.Response(200, headers={"content-type": "text/event-stream"}, content=body)
+
+    p = Provider(name="test", base_url="http://mock.test/v1", api_key="k", model="m")
+    client = ChatClient(p, transport=httpx.MockTransport(handler))
+    agent = Agent(client, yolo=True)
+    list(agent.ask("hi"))
+    for key in ("temperature", "max_tokens", "top_p"):
+        assert key not in seen["payload"]

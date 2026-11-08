@@ -11,7 +11,9 @@ from .tools import TOOL_SCHEMAS, ToolBox
 SYSTEM_TEMPLATE = """You are novair, a sharp, pragmatic AI agent living in the user's terminal.
 Environment: {os_name} {arch} · shell {shell} · cwd {cwd} · {date}
 
-You can call tools: run_shell, read_file, write_file, list_dir.
+You can call tools: {tools}.
+You also have persistent per-project memory: save durable facts (build
+commands, conventions, decisions) with retain and look them up with recall.
 Style: concise, direct, code-first. Prefer concrete commands and real file
 contents over speculation — when a task needs information from the machine,
 use tools instead of guessing. Keep final answers short unless depth is asked
@@ -27,6 +29,8 @@ class Agent:
         yolo: bool = False,
         max_tool_rounds: int = 8,
         temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+        top_p: Optional[float] = None,
     ):
         self.client = client
         self.model = client.provider.model
@@ -34,18 +38,22 @@ class Agent:
         self.toolbox = ToolBox(confirm=confirm, yolo=yolo)
         self.max_tool_rounds = max_tool_rounds
         self.temperature = temperature
+        self.max_tokens = max_tokens
+        self.top_p = top_p
         self.messages: List[Dict[str, Any]] = []
         self.usage = {"prompt": 0, "completion": 0, "cost": 0.0, "estimated": False}
 
     # ── system prompt ────────────────────────────────────────────────────────
     @staticmethod
     def default_system_text() -> str:
+        names = ", ".join(s["function"]["name"] for s in TOOL_SCHEMAS)
         return SYSTEM_TEMPLATE.format(
             os_name=platform.system() or "?",
             arch=platform.machine() or "?",
             shell="bash" if platform.system() != "Windows" else "cmd",
             cwd="?",
             date=datetime.date.today().isoformat(),
+            tools=names,
         )
 
     def set_cwd(self, cwd: str) -> None:
@@ -174,7 +182,11 @@ class Agent:
         finish = None
 
         for ev in self.client.chat_stream(
-            messages, tools=TOOL_SCHEMAS, temperature=self.temperature
+            messages,
+            tools=TOOL_SCHEMAS,
+            temperature=self.temperature,
+            max_tokens=self.max_tokens,
+            top_p=self.top_p,
         ):
             if ev["type"] == "message":
                 msg = ev["message"]

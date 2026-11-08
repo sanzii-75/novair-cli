@@ -18,11 +18,14 @@ Repo: `github.com/sanzii-75/novair`. Current release: **v0.2.0**. Read this file
 | --- | --- |
 | `novair/config.py` | Env-only provider config. Presets: `openrouter`, `openai`; default = `NOVAIR_API_KEY`/`NOVAIR_BASE_URL`/`NOVAIR_MODEL` (falls back to `OPENAI_*`). Custom profiles: `NOVAIR_PROFILE_<NAME>_API_KEY/_BASE_URL/_MODEL`, select via `NOVAIR_PROVIDER`. Auto-detects available profiles, generates export snippets. |
 | `novair/client.py` | httpx SSE streaming client for any `/chat/completions` dialect. Non-stream fallback, OpenRouter attribution headers, friendly errors for 401/404/429/5xx. |
-| `novair/tools.py` | 5 tools: `run_shell`, `read_file`, `write_file`, `list_dir`, `fetch_url`. Dangerous ops require y/n/a confirmation (bypass with `--yolo`). |
-| `novair/agent.py` | The agent loop. Stitches `tool_call` deltas across stream chunks, heals interrupted tool rounds (assistant msg with dangling `tool_calls` gets a synthetic error result), tracks token usage. |
+| `novair/tools.py` | 11 tools: `run_shell`, `read_file`, `write_file`, `edit_file`, `list_dir`, `grep`, `glob`, `fetch_url`, `web_search`, `retain`, `recall`. Mutating ops (`run_shell`, `write_file`, `edit_file`) require y/n/a confirmation (bypass with `--yolo`). |
+| `novair/agent.py` | The agent loop. Stitches `tool_call` deltas across stream chunks, heals interrupted tool rounds (assistant msg with dangling `tool_calls` gets a synthetic error result), tracks token usage. System prompt's tool list is generated from `TOOL_SCHEMAS`. |
+| `novair/memory.py` | Per-project JSON memory bank under `~/.local/share/novair/memory/<sha1(cwd)[:12]>.json`; `add_fact`/`search_facts`/`clear`. Backs the `retain`/`recall` tools. |
+| `novair/completions.py` | Shell completion generators for `novair completions bash|zsh|fish`; embeds live provider profiles so `--provider <TAB>` never drifts. |
 | `novair/session.py` | JSON session persistence in `~/.local/share/novair/sessions`. |
-| `novair/ui/app.py` | Rich TUI: gradient "NOVAIR" banner, bordered chat panel (`ChatView`), `StatusBar`, compact mode for narrow terminals, ~12 slash commands (`/help /new /sessions /resume /provider /model /models /system /tools /yolo /clear /export`). A `Bridge` forwards tool confirmations into the TUI. |
-| `novair/cli.py` | Entry point. Subcommands: `chat`, `run`, `providers`, `models`, `sessions`. Flags include `--base-url`, `--model`, `--yolo`. |
+| `novair/ui/app.py` | Rich TUI: gradient "NOVAIR" banner, bordered chat panel (`ChatView`), `StatusBar`, compact mode for narrow terminals, ~14 slash commands (`/help /new /sessions /resume /provider /model /models /system /theme /memory /tools /yolo /clear /export`). `apply_theme()` rebinds the palette constants; a `Bridge` forwards tool confirmations into the TUI. |
+| `novair/ui/themes.py` | Named color themes (`novair`, `catppuccin`, `tokyonight`, `gruvbox`, `dracula`, `matrix`) selected via `NOVAIR_THEME`, `--theme`, or `/theme`. |
+| `novair/cli.py` | Entry point. Subcommands: `chat`, `run`, `providers`, `models`, `sessions`, `completions`. Flags include `--base-url`, `--model`, `--temperature`, `--max-tokens`, `--top-p`, `--theme` (chat only), `--yolo`. Env fallbacks: `NOVAIR_TEMPERATURE`, `NOVAIR_MAX_TOKENS`, `NOVAIR_TOP_P`. |
 | `install.sh` | Arch installer: auto-installs python via pacman, isolated venv at `~/.local/share/novair`, launcher `~/.local/bin/novair`, `--uninstall` support. |
 | `examples/mock_server.py` | Zero-key OpenAI-compatible mock on **http://localhost:8931/v1**. Use it for ALL end-to-end testing. |
 | `tests/` | pytest suite (client, agent, tools, ui, config, session) with mocked HTTP transports. |
@@ -76,11 +79,14 @@ NOVAIR_API_KEY=mock NOVAIR_BASE_URL=http://127.0.0.1:8931/v1 NOVAIR_MODEL=mock-s
   languages) and this file if the architecture shifts.
 - UI strings should render well on dark terminals; prefer the existing glyph set (`❯ › ⚙ □ ◨`).
 
-## Where things stand (v0.3.0)
+## Where things stand (v0.4.0)
 
 **v0.3.0 rename note:** this project was previously named **nexa**. Everything is now `novair` (command, package, env prefix `NOVAIR_`, data dir `~/.local/share/novair`). Old local data dirs can be migrated with `mv ~/.local/share/nexa ~/.local/share/novair`.
 
-Shipped: streaming chat, tool calling + confirmations, env-only multi-provider config, session
-save/resume, full TUI, Arch installer, mock server, pytest suite, CI, AUR PKGBUILD, bilingual docs.
-Roadmap ideas: publish to AUR properly, more tools (web search, RAG), model-parameter flags
-(temperature/max tokens), shell completion.
+Shipped (through v0.4.0 "batteries included"): streaming chat, 11 tools + confirmations,
+per-project memory (`retain`/`recall`), env-only multi-provider config, sampling params
+(`--temperature/--max-tokens/--top-p` + env fallbacks), color themes (`NOVAIR_THEME`, `/theme`),
+shell completion (`novair completions`), session save/resume, full TUI, Arch installer,
+mock server, pytest suite, CI, AUR PKGBUILD, bilingual docs.
+Roadmap ideas: memory upgrades (reflect/forget, cross-project), subagent fan-out (`task` tool),
+`/cost` table, AUR submission.

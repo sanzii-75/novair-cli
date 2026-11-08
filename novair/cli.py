@@ -56,16 +56,17 @@ def build_parser() -> argparse.ArgumentParser:
     common.add_argument("--api-key", metavar="KEY", help="API key (env vars are safer)")
     common.add_argument("--system", metavar="TEXT", help="override the system prompt")
     common.add_argument("--temperature", type=float, default=None, metavar="T",
-                        help="sampling temperature (0.0-2.0)")
+                        help="sampling temperature (0.0-2.0; env NOVAIR_TEMPERATURE)")
+    common.add_argument("--max-tokens", type=int, default=None, metavar="N",
+                        help="max completion tokens (env NOVAIR_MAX_TOKENS)")
+    common.add_argument("--top-p", type=float, default=None, metavar="P",
+                        help="nucleus sampling probability mass (env NOVAIR_TOP_P)")
     common.add_argument("--yolo", action="store_true",
                         help="run tools without confirmation prompts")
     common.add_argument("-s", "--session", metavar="ID",
                         help="session id (created/resumed under ~/.local/share/novair/sessions)")
 
     sub = parser.add_subparsers(dest="command")
-
-    sub.add_parser("chat", parents=[common],
-                   help="interactive TUI chat (default when no command given)")
 
     run_p = sub.add_parser("run", parents=[common], help="one-shot prompt → streamed answer")
     run_p.add_argument("prompt", nargs="+", help="the prompt (joined with spaces)")
@@ -76,10 +77,31 @@ def build_parser() -> argparse.ArgumentParser:
     sess = sub.add_parser("sessions", help="list or delete saved chat sessions")
     sess.add_argument("--rm", metavar="ID", help="delete a session by id")
 
+    chat_p = sub.add_parser("chat", parents=[common],
+                            help="interactive TUI chat (default when no command given)")
+    chat_p.add_argument("--theme", metavar="NAME",
+                        help="TUI color theme: novair, catppuccin, tokyonight, gruvbox, "
+                             "dracula, matrix (env NOVAIR_THEME)")
+
+    comp = sub.add_parser("completions", help="print shell completion script for bash/zsh/fish")
+    comp.add_argument("shell", choices=["bash", "zsh", "fish"],
+                      help="which shell to generate completion for")
+
     return parser
 
 
 # ── shared plumbing ──────────────────────────────────────────────────────────
+def _env_opt(name: str, cast=float):
+    """Optional env var → cast value, or None when unset/invalid."""
+    raw = os.environ.get(name)
+    if not raw:
+        return None
+    try:
+        return cast(raw)
+    except ValueError:
+        return None
+
+
 def _client_and_agent(args: argparse.Namespace, console: Console, confirm=None):
     provider = resolve(
         provider=args.provider,
@@ -93,7 +115,9 @@ def _client_and_agent(args: argparse.Namespace, console: Console, confirm=None):
         system_text=args.system,
         confirm=confirm,
         yolo=args.yolo,
-        temperature=args.temperature,
+        temperature=args.temperature if args.temperature is not None else _env_opt("NOVAIR_TEMPERATURE"),
+        max_tokens=args.max_tokens if args.max_tokens is not None else _env_opt("NOVAIR_MAX_TOKENS", int),
+        top_p=args.top_p if args.top_p is not None else _env_opt("NOVAIR_TOP_P"),
     )
     agent.set_cwd(os.getcwd())
     return provider, client, agent
@@ -141,7 +165,8 @@ def cmd_chat(args: argparse.Namespace) -> int:
 
     provider, client, agent = _client_and_agent(args, console, confirm=confirm_hook)
     run_chat(console, provider, client, agent,
-             session_id=args.session, confirm_hook=confirm_hook)
+             session_id=args.session, confirm_hook=confirm_hook,
+             theme=args.theme)
     return 0
 
 
@@ -268,6 +293,13 @@ def cmd_sessions(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_completions(args: argparse.Namespace) -> int:
+    from .completions import script_for
+
+    sys.stdout.write(script_for(args.shell))
+    return 0
+
+
 # ── entry point ──────────────────────────────────────────────────────────────
 def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = build_parser()
@@ -282,6 +314,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         "providers": cmd_providers,
         "models": cmd_models,
         "sessions": cmd_sessions,
+        "completions": cmd_completions,
     }
     try:
         return handlers[args.command](args)

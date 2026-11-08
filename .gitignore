@@ -15,3 +15,6 @@ venv/
 
 # Local scratch
 *.log
+
+# ZCode session workspace
+.zcode/

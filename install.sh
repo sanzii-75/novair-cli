@@ -103,6 +103,12 @@ case ":$PATH:" in
         ;;
 esac
 
+# ── 5. shell completion hint ─────────────────────────────────────────────────
+printf "${C_BOLD}Shell completion${C_RESET} (optional — add the line matching your shell):\n"
+printf "    ${C_BOLD}bash:${C_RESET} echo 'eval \"\$(novair completions bash)\"' >> ~/.bashrc\n"
+printf "    ${C_BOLD}zsh: ${C_RESET} echo 'eval \"\$(novair completions zsh)\"' >> ~/.zshrc\n"
+printf "    ${C_BOLD}fish:${C_RESET} novair completions fish > ~/.config/fish/completions/novair.fish\n\n"
+
 # ── done ─────────────────────────────────────────────────────────────────────
 printf "${C_GREEN}${C_BOLD}"
 cat <<'EOF'
