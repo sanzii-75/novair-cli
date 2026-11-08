@@ -63,13 +63,16 @@ NOVAIR_API_KEY=mock NOVAIR_BASE_URL=http://127.0.0.1:8931/v1 NOVAIR_MODEL=mock-s
    them only after that block (a missing `C_YELLOW` once broke the installer).
 7. **pyproject**: use SPDX `license = "MIT"` with `setuptools>=77` (the old license classifiers are
    deprecated). Keep it that way.
-8. **Git identity**: NEVER commit as `nexa <nexa@users.noreply.github.com>` — that noreply email is
+8. **Version lives only in pyproject.toml** — `novair/__init__.py` reads it via
+   `importlib.metadata("novair-cli")`. Bumping a release means editing pyproject only; a hardcoded
+   string in `__init__.py` once made `novair --version` lag one release behind.
+9. **Git identity**: NEVER commit as `nexa <nexa@users.noreply.github.com>` — that noreply email is
    bound to a real stranger's GitHub account (username `nexa`), and GitHub attributed every commit
    to them. Commits must use the maintainer's verified identity.
-9. **Ruff ignores are intentional** — `B008` (call-default APIs), `RUF001` (❯ › ⚙ are deliberate TUI
-   glyphs), `RUF005` (clearer concat). Don't "fix" code to satisfy them. Same for UP-rules: they are
-   unselected on purpose for 3.9 typing compatibility.
-10. **Test the TUI in a real PTY** (`script -qec "python -m novair chat" /dev/null`) and at **80x20**
+10. **Ruff ignores are intentional** — `B008` (call-default APIs), `RUF001` (❯ › ⚙ are deliberate TUI
+    glyphs), `RUF005` (clearer concat). Don't "fix" code to satisfy them. Same for UP-rules: they are
+    unselected on purpose for 3.9 typing compatibility.
+11. **Test the TUI in a real PTY** (`script -qec "python -m novair chat" /dev/null`) and at **80x20**
     for compact mode before shipping UI changes. Screenshots for the README are rendered from there.
 
 ## Conventions
