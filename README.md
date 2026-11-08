@@ -1,4 +1,4 @@
-#  Novair: A Ai Agent 
+#  Novair: Ai Agent 
 
 **A terminal AI agent for any OpenAI-compatible provider.** Full TUI panels, streaming answers with markdown, real tool calling (shell / files / web), saved sessions — configured entirely with environment variables.
 
